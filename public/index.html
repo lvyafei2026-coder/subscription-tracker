@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Subscription Tracker — See What You Really Spend Each Month</title>
+<meta name="description" content="Free subscription tracker. Add your monthly and yearly subscriptions to see your total spending per month and per year. Data stays in your browser.">
+<meta name="keywords" content="subscription tracker, subscription manager, monthly subscription calculator, how much do i spend on subscriptions">
+<meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
+<meta name="theme-color" content="#0369a1">
+
+<link rel="canonical" href="https://toolara.dev/subscription-tracker/">
+<link rel="alternate" hreflang="en" href="https://toolara.dev/subscription-tracker/">
+<link rel="alternate" hreflang="zh-Hans" href="https://toolara.dev/subscription-tracker/zh/">
+<link rel="alternate" hreflang="x-default" href="https://toolara.dev/subscription-tracker/">
+
+<meta property="og:type" content="website">
+<meta property="og:title" content="Subscription Tracker — See What You Really Spend">
+<meta property="og:description" content="Track all your subscriptions in one place. See monthly and yearly totals.">
+<meta property="og:url" content="https://toolara.dev/subscription-tracker/">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "Subscription Tracker",
+  "url": "https://toolara.dev/subscription-tracker/",
+  "applicationCategory": "FinanceApplication",
+  "operatingSystem": "Any",
+  "description": "Free subscription tracker that shows your monthly and yearly spending across all your subscriptions.",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+}
+</script>
+
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="hero">
+  <div class="lang-switch">
+    <select id="langSelect" onchange="setLang(this.value)" aria-label="Language">
+      <option value="en">English</option>
+      <option value="zh">简体中文</option>
+    </select>
+  </div>
+  <div class="hero-inner">
+    <div class="hero-badge">📊 Subscription Tool</div>
+    <h1 data-i18n="title">Subscription Tracker</h1>
+    <p data-i18n="subtitle">Add every subscription you pay for. See what it actually costs you per month and per year.</p>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- 总览 -->
+  <section class="card summary-card">
+    <div class="summary-grid">
+      <div class="summary-item">
+        <div class="summary-label" data-i18n="sumMonthly">Monthly total</div>
+        <div class="summary-value" id="sumMonthly">$0.00</div>
+      </div>
+      <div class="summary-item">
+        <div class="summary-label" data-i18n="sumYearly">Yearly total</div>
+        <div class="summary-value" id="sumYearly">$0.00</div>
+      </div>
+      <div class="summary-item">
+        <div class="summary-label" data-i18n="sumCount">Subscriptions</div>
+        <div class="summary-value" id="sumCount">0</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 新增表单 -->
+  <section class="card">
+    <h2 data-i18n="addTitle">Add a subscription</h2>
+
+    <div class="row">
+      <div>
+        <label for="name" data-i18n="nameLabel">Name</label>
+        <input type="text" id="name" placeholder="Netflix" maxlength="80">
+      </div>
+      <div>
+        <label for="amount" data-i18n="amountLabel">Amount</label>
+        <input type="number" id="amount" min="0.01" step="0.01" placeholder="15.99">
+      </div>
+    </div>
+
+    <div class="row">
+      <div>
+        <label for="currency" data-i18n="currencyLabel">Currency</label>
+        <select id="currency">
+          <option value="USD" selected>USD ($)</option>
+          <option value="EUR">EUR (€)</option>
+          <option value="GBP">GBP (£)</option>
+          <option value="CNY">CNY (¥)</option>
+          <option value="JPY">JPY (¥)</option>
+        </select>
+      </div>
+      <div>
+        <label for="cycle" data-i18n="cycleLabel">Billing cycle</label>
+        <select id="cycle">
+          <option value="monthly" selected data-i18n="cycleMonthly">Monthly</option>
+          <option value="yearly" data-i18n="cycleYearly">Yearly</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="row">
+      <div>
+        <label for="category" data-i18n="categoryLabel">Category</label>
+        <select id="category">
+          <option value="streaming" data-i18n="catStreaming">Streaming &amp; media</option>
+          <option value="software" data-i18n="catSoftware">Software &amp; tools</option>
+          <option value="fitness" data-i18n="catFitness">Fitness &amp; health</option>
+          <option value="news" data-i18n="catNews">News &amp; reading</option>
+          <option value="food" data-i18n="catFood">Food &amp; delivery</option>
+          <option value="other" selected data-i18n="catOther">Other</option>
+        </select>
+      </div>
+      <div>
+        <label for="nextDue" data-i18n="nextDueLabel">Next billing date (optional)</label>
+        <input type="date" id="nextDue">
+      </div>
+    </div>
+
+    <button class="calc" type="button" onclick="addSubscription()" data-i18n="addBtn">Add subscription</button>
+    <div id="error" class="error" style="display:none;"></div>
+  </section>
+
+  <!-- 列表 -->
+  <section class="card">
+    <div class="list-header">
+      <h2 data-i18n="listTitle">Your subscriptions</h2>
+      <button class="clear-btn" type="button" onclick="clearAll()" data-i18n="clearBtn">Clear all</button>
+    </div>
+    <div id="emptyState" class="empty-state" data-i18n="emptyText">No subscriptions yet. Add one above to get started.</div>
+    <div id="list"></div>
+  </section>
+
+  <!-- 说明 -->
+  <section>
+    <h2 data-i18n="whyTitle">Why track your subscriptions?</h2>
+    <p data-i18n="whyText">The average person underestimates their subscription spending by 2-3x. A $15.99 streaming service feels small. Add a $12 software tool, a $10 fitness app, a $5 news subscription, and it's over $500 per year before you notice. Tracking them in one place makes the total visible — and makes it easy to cut what you don't use.</p>
+  </section>
+
+  <section>
+    <h2 data-i18n="privacyTitle">How your data is stored</h2>
+    <p data-i18n="privacyText">When you first open this page, your browser generates a random anonymous ID. That ID is stored in your browser's localStorage. Your subscriptions are saved to a Cloudflare D1 database, keyed to that anonymous ID. No email, no account, no personal information. If you clear your browser data, you lose access to your subscriptions.</p>
+  </section>
+
+  <section>
+    <h2 data-i18n="faqTitle">Frequently asked questions</h2>
+    <h3 data-i18n="faq1q">Do I need to create an account?</h3>
+    <p data-i18n="faq1a">No. The tool generates a random anonymous ID in your browser and stores your subscriptions under that ID. You don't provide an email, password, or any personal information.</p>
+
+    <h3 data-i18n="faq2q">What happens if I clear my browser data?</h3>
+    <p data-i18n="faq2a">You'll lose access to your saved subscriptions because the anonymous ID is stored in localStorage. If you want to keep your data, don't clear browser data for this site, or export your list first.</p>
+
+    <h3 data-i18n="faq3q">Is my data private?</h3>
+    <p data-i18n="faq3a">Yes. We don't collect emails, IPs, or any identifying information. Your subscriptions are stored in a database under an anonymous ID that only your browser knows. We can't link the data to you as a person.</p>
+
+    <h3 data-i18n="faq4q">Can I track annual subscriptions?</h3>
+    <p data-i18n="faq4a">Yes. When adding a subscription, choose "Yearly" as the billing cycle. The calculator automatically converts it to a monthly equivalent so the totals stay consistent.</p>
+
+    <h3 data-i18n="faq5q">Does this sync across devices?</h3>
+    <p data-i18n="faq5a">No. The anonymous ID is per-browser. To use this tool on multiple devices, you'd need to export your subscriptions and re-add them on the other device.</p>
+
+    <div class="disclaimer" data-i18n="disclaimer"><strong>Note:</strong> This tool helps you see your subscription spending. It does not connect to your bank account or payment methods.</div>
+  </section>
+</main>
+
+<footer class="footer" data-i18n="footer">Data stored in Cloudflare D1 under an anonymous ID. No personal info collected.</footer>
+
+<script src="js/i18n.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
