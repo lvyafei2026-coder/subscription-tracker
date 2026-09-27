@@ -2,12 +2,10 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
 
-    // CORS preflight
     if (request.method === 'OPTIONS') {
       return new Response(null, { headers: corsHeaders() });
     }
 
-    // 所有 /api/* 路由都进 Worker
     if (url.pathname.includes('/api/')) {
       return handleApi(request, env, url);
     }
@@ -19,7 +17,7 @@ export default {
 function corsHeaders() {
   return {
     'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
   };
 }
@@ -33,23 +31,18 @@ function json(obj, status = 200) {
 
 async function handleApi(request, env, url) {
   const path = url.pathname;
-  const method = request.method;
-  const isSubsPath = path.endsWith('/api/subscriptions') || path.endsWith('/api/subscriptions/');
 
-  // POST /api/subscriptions — 新增
-  if (isSubsPath && method === 'POST') {
+  // 用路径区分操作，不依赖 HTTP 方法
+  if (path.endsWith('/api/subscriptions/add')) {
     return addSubscription(request, env);
   }
 
-  // GET /api/subscriptions?user_id=xxx — 列表
-  if (isSubsPath && method === 'GET') {
+  if (path.endsWith('/api/subscriptions/list')) {
     return listSubscriptions(request, env, url);
   }
 
-  // DELETE /api/subscriptions/:id — 删除
-  const deleteMatch = path.match(/\/api\/subscriptions\/([^\/]+)\/?$/);
-  if (deleteMatch && method === 'DELETE') {
-    return deleteSubscription(request, env, deleteMatch[1]);
+  if (path.endsWith('/api/subscriptions/delete')) {
+    return deleteSubscription(request, env);
   }
 
   return json({ error: 'Not found' }, 404);
@@ -74,9 +67,6 @@ async function addSubscription(request, env) {
     }
     if (!isFinite(amount) || amount <= 0 || amount > 100000) {
       return json({ error: 'Amount must be between 0 and 100000' }, 400);
-    }
-    if (!['monthly', 'yearly'].includes(cycle)) {
-      return json({ error: 'Cycle must be monthly or yearly' }, 400);
     }
 
     const result = await env.DB.prepare(
@@ -108,17 +98,22 @@ async function listSubscriptions(request, env, url) {
   }
 }
 
-async function deleteSubscription(request, env, id) {
+async function deleteSubscription(request, env) {
   try {
-    const body = await request.json().catch(() => ({}));
+    const body = await request.json();
     const userId = (body.user_id || '').trim();
+    const id = parseInt(body.id);
+
     if (!userId || userId.length < 8) {
       return json({ error: 'Invalid user_id' }, 400);
+    }
+    if (!id || id <= 0) {
+      return json({ error: 'Invalid id' }, 400);
     }
 
     const result = await env.DB.prepare(
       'DELETE FROM subscriptions WHERE id = ? AND user_id = ?'
-    ).bind(parseInt(id), userId).run();
+    ).bind(id, userId).run();
 
     if (result.meta.changes === 0) {
       return json({ error: 'Subscription not found' }, 404);

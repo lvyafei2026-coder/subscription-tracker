@@ -22,13 +22,7 @@ function fmtCurrency(amount, currency) {
 }
 
 async function loadSubscriptions() {
-  try {
-    const res = await fetch(base() + '/api/subscriptions?user_id=' + encodeURIComponent(getUserId()));
-    const data = await res.json();
-    renderList(data.subscriptions || []);
-  } catch (err) {
-    console.error('loadSubscriptions error:', err);
-  }
+  const res = await fetch(base() + '/api/subscriptions/list?user_id=' + encodeURIComponent(getUserId()));
 }
 
 function renderList(subs) {
@@ -87,80 +81,31 @@ function escapeHtml(str) {
 }
 
 async function addSubscription() {
-  const tr = t();
-  const errEl = document.getElementById('error');
-  errEl.style.display = 'none';
-
-  const name = document.getElementById('name').value.trim();
-  const amount = parseFloat(document.getElementById('amount').value);
-  const currency = document.getElementById('currency').value;
-  const cycle = document.getElementById('cycle').value;
-  const category = document.getElementById('category').value;
-  const next_due = document.getElementById('nextDue').value;
-
-  if (!name) { showError(tr.errName || 'Please enter a name.'); return; }
-  if (!isFinite(amount) || amount <= 0) { showError(tr.errAmount || 'Please enter a valid amount.'); return; }
-
-  try {
-    const res = await fetch(base() + '/api/subscriptions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        user_id: getUserId(),
-        name, amount, currency, cycle, category, next_due
-      })
-    });
-
-    const data = await res.json();
-    if (!res.ok) {
-      showError(data.error || (tr.errSave || 'Could not save.'));
-      return;
-    }
-
-    // 清空表单（保留货币和分类）
-    document.getElementById('name').value = '';
-    document.getElementById('amount').value = '';
-    document.getElementById('nextDue').value = '';
-
-    loadSubscriptions();
-  } catch (err) {
-    console.error(err);
-    showError(tr.errNetwork || 'Network error. Please try again.');
-  }
+  const res = await fetch(base() + '/api/subscriptions/add', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      user_id: getUserId(),
+      name, amount, currency, cycle, category, next_due
+    })
+  });
 }
 
 async function deleteSub(id) {
-  const tr = t();
-  if (!confirm(tr.confirmDelete || 'Delete this subscription?')) return;
-  try {
-    const res = await fetch(base() + '/api/subscriptions/' + id, {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ user_id: getUserId() })
-    });
-    if (res.ok) loadSubscriptions();
-  } catch (err) {
-    console.error(err);
-  }
+  const res = await fetch(base() + '/api/subscriptions/delete', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ user_id: getUserId(), id: id })
+  });
 }
 
 async function clearAll() {
-  const tr = t();
-  if (!confirm(tr.confirmClear || 'Delete all subscriptions? This cannot be undone.')) return;
-  try {
-    const res = await fetch(base() + '/api/subscriptions?user_id=' + encodeURIComponent(getUserId()));
-    const data = await res.json();
-    const subs = data.subscriptions || [];
-    for (const s of subs) {
-      await fetch(base() + '/api/subscriptions/' + s.id, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_id: getUserId() })
-      });
-    }
-    loadSubscriptions();
-  } catch (err) {
-    console.error(err);
+  for (const s of subs) {
+    await fetch(base() + '/api/subscriptions/delete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_id: getUserId(), id: s.id })
+    });
   }
 }
 
