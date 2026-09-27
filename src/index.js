@@ -34,19 +34,20 @@ function json(obj, status = 200) {
 async function handleApi(request, env, url) {
   const path = url.pathname;
   const method = request.method;
+  const isSubsPath = path.endsWith('/api/subscriptions') || path.endsWith('/api/subscriptions/');
 
   // POST /api/subscriptions — 新增
-  if (path.endsWith('/api/subscriptions') && method === 'POST') {
+  if (isSubsPath && method === 'POST') {
     return addSubscription(request, env);
   }
 
   // GET /api/subscriptions?user_id=xxx — 列表
-  if (path.endsWith('/api/subscriptions') && method === 'GET') {
+  if (isSubsPath && method === 'GET') {
     return listSubscriptions(request, env, url);
   }
 
   // DELETE /api/subscriptions/:id — 删除
-  const deleteMatch = path.match(/\/api\/subscriptions\/([^\/]+)$/);
+  const deleteMatch = path.match(/\/api\/subscriptions\/([^\/]+)\/?$/);
   if (deleteMatch && method === 'DELETE') {
     return deleteSubscription(request, env, deleteMatch[1]);
   }
