@@ -30,7 +30,7 @@ function json(obj, status = 200) {
 }
 
 async function handleApi(request, env, url) {
-  const path = url.pathname;
+  const path = url.pathname.replace(/\/$/, '');
 
   // 用路径区分操作，不依赖 HTTP 方法
   if (path.endsWith('/api/subscriptions/add')) {
