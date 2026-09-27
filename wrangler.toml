@@ -11,4 +11,4 @@ run_worker_first = ["/api/*"]
 [[d1_databases]]
 binding = "DB"
 database_name = "subscription-tracker-db"
-database_id = "PLACEHOLDER_DATABASE_ID"
+database_id = "56ccdfb4-5402-46ee-a903-24f67792d2a8"
